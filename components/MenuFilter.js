@@ -1,6 +1,6 @@
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 
-const Filters = ({ onChange, selections, sections }) => {
+const MenuFilter = ({ onChange, selections, sections }) => {
   return (
     <View style={styles.filtersContainer}>
       {sections.map((section, index) => (
@@ -37,4 +37,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Filters;
+export default MenuFilter;
