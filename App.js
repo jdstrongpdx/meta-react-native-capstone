@@ -85,7 +85,15 @@ export default function App() {
                 <Stack.Navigator>
                     {onboardingCompleted ? (
                         // Navigate to Profile if onboarding is complete
-                        <Stack.Screen name="Profile" component={Profile} />
+                        <Stack.Screen
+                            name="Profile"
+                            component={(props) => (
+                                <Profile
+                                    {...props}
+                                    setOnboardingCompleted={setOnboardingCompleted}
+                                />
+                            )}
+                        />
                     ) : (
                         // Pass the completeOnboarding function to Onboarding screen
                         <Stack.Screen

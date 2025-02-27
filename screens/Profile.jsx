@@ -1,33 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Text,
     TextInput,
     StyleSheet,
     Pressable,
     Alert,
+    Switch,
+    View,
 } from 'react-native';
-import HeroPageView from "../components/HeroPageView";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import ProfilePageView from "../components/ProfilePageView";
 
-export default function Profile({ navigation }) {
+export default function Onboarding({ navigation, setOnboardingCompleted }) {
     const [name, onChangeName] = useState('');
     const [email, onChangeEmail] = useState('');
+    const [phoneNumber, onChangePhoneNumber] = useState('');
+    const [specialOffers, setSpecialOffers] = useState(false);
+    const [newsletter, setNewsletter] = useState(false);
     const [disabled, setDisabled] = useState(true);
 
-    const handlePress = () => {
-        setDisabled(true);
-        if (!validateEmail(email) || name.trim().length === 0) {
-            Alert.alert('Please enter a valid name and email address');
-            setDisabled(false);
-        }
-        else {
-            completeOnboarding().then(() => {
-                navigation.navigate('Profile');
-            }).catch(error => {
-                Alert.alert("Error saving onboarding status in AsyncStorage:");
-            })
-        }
-    };
+    // Load data from AsyncStorage on component mount
+    useEffect(() => {
+        loadUserData();
+    }, []);
 
     const validateEmail = (email) => {
         return email.match(
@@ -35,26 +30,68 @@ export default function Profile({ navigation }) {
         );
     };
 
-    const completeOnboarding = async () => {
-        try {
-            await AsyncStorage.setItem("onboardingCompleted", "true");
-            await AsyncStorage.setItem("userName", name.trim());
-            await AsyncStorage.setItem("userEmail", email.trim());
-        } catch (error) {
-            console.error("Error saving onboarding data in AsyncStorage:", error);
+    const handleEmailChange = (value) => {
+        onChangeEmail(value);
+        setDisabled(!validateEmail(value) || name.trim().length === 0);
+    };
+
+    const handlePress = () => {
+        setDisabled(true);
+        if (!validateEmail(email) || name.trim().length === 0) {
+            Alert.alert('Please enter a valid name and email address');
+            setDisabled(false);
+        } else {
+            saveUserData().then(() => {
+                navigation.navigate('Profile'); // TODO update route
+            }).catch(error => {
+                Alert.alert("Error saving profile data in AsyncStorage");
+            });
         }
     };
 
-    const handleEmailChange = (value) => {
-        onChangeEmail(value);
-        setDisabled(value.trim().length === 0);
+    const loadUserData = async () => {
+        try {
+            const savedName = await AsyncStorage.getItem("userName");
+            const savedEmail = await AsyncStorage.getItem("userEmail");
+            const savedPhoneNumber = await AsyncStorage.getItem("userPhoneNumber");
+            const savedSpecialOffers = await AsyncStorage.getItem("userSpecialOffers");
+            const savedNewsletter = await AsyncStorage.getItem("userNewsletter");
+
+            // Update state with loaded values
+            if (savedName) onChangeName(savedName);
+            if (savedEmail) onChangeEmail(savedEmail);
+            if (savedPhoneNumber) onChangePhoneNumber(savedPhoneNumber);
+            if (savedSpecialOffers !== null) setSpecialOffers(savedSpecialOffers === "true");
+            if (savedNewsletter !== null) setNewsletter(savedNewsletter === "true");
+        } catch (error) {
+            console.error("Error loading data from AsyncStorage:", error);
+        }
+    };
+
+    const saveUserData = async () => {
+        try {
+            // Save all fields to AsyncStorage
+            await AsyncStorage.setItem("userName", name.trim());
+            await AsyncStorage.setItem("userEmail", email.trim());
+            await AsyncStorage.setItem("userPhoneNumber", phoneNumber.trim());
+            await AsyncStorage.setItem("userSpecialOffers", specialOffers.toString());
+            await AsyncStorage.setItem("userNewsletter", newsletter.toString());
+            setOnboardingCompleted(true);
+        } catch (error) {
+            console.error("Error saving profile data in AsyncStorage:", error);
+        }
+    };
+
+    const handleLogout = () => {
+        setOnboardingCompleted(false);
+        navigation.navigate('Welcome');
     };
 
     return (
-        <HeroPageView>
+        <ProfilePageView>
             {/* Content */}
             <>
-                <Text style={styles.headerText}>Let us get to know you</Text>
+                <Text style={styles.headerText}>Profile Information</Text>
                 <Text style={styles.regularText}>Name *</Text>
                 <TextInput
                     style={styles.inputBox}
@@ -71,19 +108,51 @@ export default function Profile({ navigation }) {
                     placeholder={'email@example.com'}
                     keyboardType={'email-address'}
                 />
+                <Text style={styles.regularText}>Phone Number *</Text>
+                <TextInput
+                    style={styles.inputBox}
+                    value={phoneNumber}
+                    onChangeText={onChangePhoneNumber}
+                    placeholder={'123-456-7890'}
+                    keyboardType={'phone-pad'}
+                />
+
+                <Text style={styles.headerText}>Email Notifications</Text>
+                <View style={styles.row}>
+                    <Text style={styles.switchText}>Special Offers</Text>
+                    <Switch
+                        value={specialOffers}
+                        onValueChange={(value) => setSpecialOffers(value)}
+                    />
+                </View>
+                <View style={styles.row}>
+                    <Text style={styles.switchText}>Newsletter</Text>
+                    <Switch
+                        value={newsletter}
+                        onValueChange={(value) => setNewsletter(value)}
+                    />
+                </View>
             </>
 
             {/* Footer */}
             <>
-                <Pressable
-                    onPress={() => handlePress()}
-                    style={[styles.button, disabled && styles.disabled]}
-                    disabled={disabled}
-                >
-                    <Text style={styles.buttonText}>Next</Text>
-                </Pressable>
+                <View style={styles.buttonRow}>
+                    <Pressable
+                        onPress={() => handleLogout()}
+                        style={styles.logoutButton}
+                    >
+                        <Text style={styles.buttonText}>Log Out</Text>
+                    </Pressable>
+                    <Pressable
+                        onPress={() => handlePress()}
+                        style={[styles.button, disabled && styles.disabled]}
+                        disabled={disabled}
+                    >
+                        <Text style={styles.buttonText}>Update Profile</Text>
+                    </Pressable>
+                </View>
             </>
-        </HeroPageView>
+        </ProfilePageView>
     );
 }
 
@@ -93,10 +162,18 @@ const styles = StyleSheet.create({
         color: '#4D5B6C',
         marginBottom: 8,
     },
+    switchText: {
+        fontSize: 18,
+        color: '#4D5B6C',
+        marginBottom: 8,
+        marginRight: 10,
+    },
     headerText: {
         fontSize: 18,
         color: '#4D5B6C',
-        marginBottom: 45,
+        marginBottom: 20,
+        fontWeight: 'bold',
+        marginTop: 20,
     },
     inputBox: {
         height: 40,
@@ -109,18 +186,35 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     button: {
-        alignSelf: 'flex-end', // Align button to the right
+        alignSelf: 'flex-end',
         backgroundColor: '#CCD2D8',
         paddingVertical: 10,
         paddingHorizontal: 20,
-        borderRadius: 5,
+        borderRadius: 8,
+    },
+    logoutButton: {
+        alignSelf: 'flex-end',
+        backgroundColor: '#EECF49',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+    },
+    buttonRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+
+    disabled: {
+        opacity: 0.5,
+    },
+    row: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 15,
     },
     buttonText: {
-        fontSize: 18,
-        color: '#4D5B6C',
-    },
-    disabled: {
-        backgroundColor: 'grey',
-        opacity: 0.5,
+        fontSize: 16,
+        color: 'black',
     },
 });
