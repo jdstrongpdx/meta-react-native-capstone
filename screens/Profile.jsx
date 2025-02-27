@@ -9,7 +9,7 @@ import {
 import HeroPageView from "../components/HeroPageView";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default function Onboarding({ navigation, setOnboardingCompleted }) {
+export default function Profile({ navigation }) {
     const [name, onChangeName] = useState('');
     const [email, onChangeEmail] = useState('');
     const [disabled, setDisabled] = useState(true);
@@ -40,7 +40,6 @@ export default function Onboarding({ navigation, setOnboardingCompleted }) {
             await AsyncStorage.setItem("onboardingCompleted", "true");
             await AsyncStorage.setItem("userName", name.trim());
             await AsyncStorage.setItem("userEmail", email.trim());
-            setOnboardingCompleted(true);
         } catch (error) {
             console.error("Error saving onboarding data in AsyncStorage:", error);
         }
@@ -48,7 +47,7 @@ export default function Onboarding({ navigation, setOnboardingCompleted }) {
 
     const handleEmailChange = (value) => {
         onChangeEmail(value);
-        setDisabled(!validateEmail(value));
+        setDisabled(value.trim().length === 0);
     };
 
     return (

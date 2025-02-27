@@ -3,7 +3,7 @@ import { SECTION_LIST_MOCK_DATA } from '../utilities/utils';
 
 const db = SQLite.openDatabase('little_lemon');
 
-export async function createTable() {
+export async function createMenuTable() {
   return new Promise((resolve, reject) => {
     db.transaction(
       (tx) => {
