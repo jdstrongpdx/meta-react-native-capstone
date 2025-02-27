@@ -6,10 +6,11 @@ import {
     Pressable,
     Alert,
     Switch,
-    View,
+    View, Button,
 } from 'react-native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ProfilePageView from "../components/ProfilePageView";
+import * as ImagePicker from 'expo-image-picker';
 
 export default function Onboarding({ navigation, setOnboardingCompleted }) {
     const [name, onChangeName] = useState('');
@@ -18,16 +19,47 @@ export default function Onboarding({ navigation, setOnboardingCompleted }) {
     const [specialOffers, setSpecialOffers] = useState(false);
     const [newsletter, setNewsletter] = useState(false);
     const [disabled, setDisabled] = useState(true);
+    const [image, setImage] = useState(null);
 
     // Load data from AsyncStorage on component mount
     useEffect(() => {
+        loadImage();
         loadUserData();
     }, []);
+
+    const loadImage = async () => {
+        const savedImage = await AsyncStorage.getItem("userAvatar");
+        if (savedImage) setImage(savedImage);
+    };
+
+    const pickImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            setImage(result.assets[0].uri);
+        }
+    };
+
+    const removeImage = () => {
+        setImage(null);
+    };
 
     const validateEmail = (email) => {
         return email.match(
             /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
         );
+    };
+
+    const getInitials = () => {
+        if (!name) return "";
+        const names = name.trim().split(" ");
+        const initials = names.map((n) => n[0].toUpperCase());
+        return initials.join("");
     };
 
     const handleEmailChange = (value) => {
@@ -76,6 +108,11 @@ export default function Onboarding({ navigation, setOnboardingCompleted }) {
             await AsyncStorage.setItem("userPhoneNumber", phoneNumber.trim());
             await AsyncStorage.setItem("userSpecialOffers", specialOffers.toString());
             await AsyncStorage.setItem("userNewsletter", newsletter.toString());
+            if (image) {
+                await AsyncStorage.setItem("userAvatar", image);
+            } else {
+                await AsyncStorage.removeItem("userAvatar");
+            }
             setOnboardingCompleted(true);
         } catch (error) {
             console.error("Error saving profile data in AsyncStorage:", error);
@@ -92,6 +129,28 @@ export default function Onboarding({ navigation, setOnboardingCompleted }) {
             {/* Content */}
             <>
                 <Text style={styles.headerText}>Profile Information</Text>
+
+                <View style={styles.row}>
+                    {/* Avatar Thumbnail */}
+                    <View style={styles.avatarWrapper}>
+                        {image ? (
+                            <Image source={{ uri: image }} style={styles.avatar} />
+                        ) : (
+                            <Text style={styles.placeholder}>{getInitials()}</Text>
+                        )}
+                    </View>
+
+                    {/* Change Button */}
+                    <Pressable style={styles.avatarButton} onPress={pickImage}>
+                        <Text style={styles.avatarButtonText}>Change</Text>
+                    </Pressable>
+
+                    {/* Remove Button */}
+                    <Pressable style={styles.avatarButton} onPress={removeImage}>
+                        <Text style={styles.avatarButtonText}>Remove</Text>
+                    </Pressable>
+                </View>
+
                 <Text style={styles.regularText}>Name *</Text>
                 <TextInput
                     style={styles.inputBox}
@@ -136,7 +195,7 @@ export default function Onboarding({ navigation, setOnboardingCompleted }) {
 
             {/* Footer */}
             <>
-                <View style={styles.buttonRow}>
+                <View style={styles.row}>
                     <Pressable
                         onPress={() => handleLogout()}
                         style={styles.logoutButton}
@@ -157,6 +216,38 @@ export default function Onboarding({ navigation, setOnboardingCompleted }) {
 }
 
 const styles = StyleSheet.create({
+    avatarWrapper: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: '#ddd',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 30,
+    },
+    avatar: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+    },
+    avatarButton: {
+        backgroundColor: '#4D5D57',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        marginRight: 20,
+    },
+    avatarButtonText: {
+        fontSize: 16,
+        color: '#CCD2D8',
+        fontWeight: 'bold',
+    },
+
+    placeholder: {
+        fontSize: 22,
+        color: "black",
+        fontWeight: "bold",
+    },
     regularText: {
         fontSize: 18,
         color: '#4D5B6C',
@@ -199,22 +290,22 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         borderRadius: 8,
     },
-    buttonRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-
     disabled: {
         opacity: 0.5,
     },
     row: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginBottom: 15,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginVertical: 10,
     },
     buttonText: {
         fontSize: 16,
         color: 'black',
+        fontWeight: 'bold',
+    },
+    image: {
+        width: 200,
+        height: 200,
     },
 });
