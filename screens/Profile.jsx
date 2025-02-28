@@ -6,19 +6,20 @@ import {
     Pressable,
     Alert,
     Switch,
-    View, Button,
+    View,
 } from 'react-native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ProfilePageView from "../components/ProfilePageView";
 import * as ImagePicker from 'expo-image-picker';
+import {navigate} from "../utilities/navigationRef";
 
-export default function Onboarding({ navigation, setOnboardingCompleted }) {
+export default function Profile({ setOnboardingStatus }) {
     const [name, onChangeName] = useState('');
     const [email, onChangeEmail] = useState('');
     const [phoneNumber, onChangePhoneNumber] = useState('');
     const [specialOffers, setSpecialOffers] = useState(false);
     const [newsletter, setNewsletter] = useState(false);
-    const [disabled, setDisabled] = useState(true);
+    const [disabled, setDisabled] = useState(false);
     const [image, setImage] = useState(null);
 
     // Load data from AsyncStorage on component mount
@@ -62,11 +63,6 @@ export default function Onboarding({ navigation, setOnboardingCompleted }) {
         return initials.join("");
     };
 
-    const handleEmailChange = (value) => {
-        onChangeEmail(value);
-        setDisabled(!validateEmail(value) || name.trim().length === 0);
-    };
-
     const handlePress = () => {
         setDisabled(true);
         if (!validateEmail(email) || name.trim().length === 0) {
@@ -74,12 +70,18 @@ export default function Onboarding({ navigation, setOnboardingCompleted }) {
             setDisabled(false);
         } else {
             saveUserData().then(() => {
-                navigation.navigate('Profile'); // TODO update route
+                navigate('Profile');
             }).catch(error => {
                 Alert.alert("Error saving profile data in AsyncStorage");
             });
         }
     };
+
+    useEffect(() => {
+        const isNameValid = name.trim().length > 0;
+        const isEmailValid = validateEmail(email);
+        setDisabled(!(isNameValid && isEmailValid));
+    }, [name, email]);
 
     const loadUserData = async () => {
         try {
@@ -113,15 +115,15 @@ export default function Onboarding({ navigation, setOnboardingCompleted }) {
             } else {
                 await AsyncStorage.removeItem("userAvatar");
             }
-            setOnboardingCompleted(true);
         } catch (error) {
             console.error("Error saving profile data in AsyncStorage:", error);
         }
     };
 
-    const handleLogout = () => {
-        setOnboardingCompleted(false);
-        navigation.navigate('Welcome');
+    const handleLogout = async () => {
+        setOnboardingStatus(false);
+        await AsyncStorage.clear();
+        navigate('Onboarding');
     };
 
     return (
@@ -163,11 +165,11 @@ export default function Onboarding({ navigation, setOnboardingCompleted }) {
                 <TextInput
                     style={styles.inputBox}
                     value={email}
-                    onChangeText={handleEmailChange}
+                    onChangeText={onChangeEmail}
                     placeholder={'email@example.com'}
                     keyboardType={'email-address'}
                 />
-                <Text style={styles.regularText}>Phone Number *</Text>
+                <Text style={styles.regularText}>Phone Number</Text>
                 <TextInput
                     style={styles.inputBox}
                     value={phoneNumber}

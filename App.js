@@ -6,21 +6,20 @@ import Profile from "./screens/Profile";
 import SplashScreen from "./screens/SplashScreen";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import {createMenuTable, getMenuItems, saveMenuItems} from "./utilities/database";
-import {getSectionListData} from "./utilities/utils";
 import Home from "./screens/Home";
+import {navigationRef} from "./utilities/navigationRef";
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
     const [loading, setLoading] = useState(true);
-    const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+    const [onboardingComplete, setOnboardingComplete] = useState(false);
 
-    const checkOnboardingStatus = async () => {
+    const loadOnboardingStatus = async () => {
         try {
             const storedValue = await AsyncStorage.getItem("onboardingCompleted");
             if (storedValue === "true") {
-                setOnboardingCompleted(true);
+                setOnboardingComplete(true);
             }
         } catch (error) {
             Alert.alert("Error reading onboarding status from AsyncStorage");
@@ -29,10 +28,25 @@ export default function App() {
         }
     };
 
+    const setOnboardingStatus = async (status) => {
+        try {
+            if (status) {
+                await AsyncStorage.setItem("onboardingCompleted", "true");
+                setOnboardingComplete(true);
+            } else {
+                await AsyncStorage.setItem("onboardingCompleted", "false");
+                setOnboardingComplete(false);
+            }
+
+        } catch (error) {
+            Alert.alert("Error saving onboarding status to AsyncStorage");
+        }
+    };
+
     // Function to read onboarding flag from AsyncStorage on app startup
     useEffect(() => {
         // check onboarding status
-        checkOnboardingStatus();
+        loadOnboardingStatus();
     }, []);
 
     if (loading) {
@@ -40,33 +54,36 @@ export default function App() {
     }
 
     return (
-        <NavigationContainer>
+        <NavigationContainer ref={navigationRef}>
             <View style={styles.container}>
-                <Stack.Navigator initialRouteName={onboardingCompleted ? "Home" : "Onboarding"}>
+                <Stack.Navigator initialRouteName={onboardingComplete ? "Home" : "Onboarding"}>
                     {/* Onboarding Screen */}
-                    {!onboardingCompleted ? (
+                    {!onboardingComplete ? (
                         <Stack.Screen
                             name="Onboarding"
                             component={(props) => (
                                 <Onboarding
                                     {...props}
-                                    setOnboardingCompleted={setOnboardingCompleted}
+                                    setOnboardingStatus={setOnboardingStatus}
                                 />
                             )}
                         />
                     ) : null}
 
                     {/* Home Screen */}
-                    <Stack.Screen
-                        name="Home"
-                        component={Home}
-                    />
+                    <Stack.Screen name="Home" component={Home}/>
 
                     {/* Profile Screen */}
                     <Stack.Screen
                         name="Profile"
-                        component={Profile}
+                        component={(props) => (
+                            <Profile
+                                {...props}
+                                setOnboardingStatus={setOnboardingStatus}
+                            />
+                        )}
                     />
+
                 </Stack.Navigator>
             </View>
         </NavigationContainer>

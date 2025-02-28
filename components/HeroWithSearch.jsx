@@ -1,8 +1,9 @@
-import { Image, StyleSheet, Text, View } from "react-native";
+import {Image, StyleSheet, Text, TextInput, View} from "react-native";
 import React from "react";
 
-const Hero = () => {
+const HeroWithSearch = ({searchText, handleSearchChange}) => {
     return (
+        <>
         <View style={styles.hero}>
             <View style={styles.heroContent}>
                 {/* Text Content */}
@@ -21,16 +22,34 @@ const Hero = () => {
                 />
             </View>
         </View>
+
+        {/* Search Bar */}
+        <View style={styles.searchBar}>
+
+            <TextInput
+                style={styles.inputBox}
+                placeholder="Search dishes..."
+                value={searchText}
+                onChangeText={handleSearchChange}
+            />
+        </View>
+        </>
     );
 };
 
-export default Hero;
+export default HeroWithSearch;
 
 const styles = StyleSheet.create({
     hero: {
         flex: 0.30,
         backgroundColor: '#4D5D57',
         justifyContent: 'center',
+    },
+    searchBar: {
+        flex: 0.10,
+        backgroundColor: '#4D5D57',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     heroContent: {
         flexDirection: 'row',
@@ -66,5 +85,15 @@ const styles = StyleSheet.create({
         resizeMode: 'contain',
         marginLeft: 20,
         borderRadius: 20,
+    },
+    inputBox: {
+        height: 40,
+        borderWidth: 2,
+        borderColor: '#666',
+        width: '90%',
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        fontSize: 16,
+        backgroundColor: '#E4E4E4',
     },
 });

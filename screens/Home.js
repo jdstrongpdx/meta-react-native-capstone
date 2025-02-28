@@ -1,19 +1,26 @@
-import { Alert, Pressable, StyleSheet, Text, Dimensions, Image, FlatList, View } from "react-native";
+import {Alert, Pressable, StyleSheet, Text, Dimensions, Image, FlatList, View} from "react-native";
 import React, { useState, useEffect } from "react";
 import HomePageView from "../components/HomePageView";
-import {clearMenuTable, createMenuTable, getMenuItems} from "../utilities/database";
+import {
+    createMenuTable,
+    getMenuItems,
+    insertMenuItems
+} from "../utilities/database";
+import { filterMenuByNameAndCategories } from "../utilities/database";
+import debounce from "lodash.debounce";
 
 const API_URL = 'https://raw.githubusercontent.com/Meta-Mobile-Developer-PC/Working-With-Data-API/main/capstone.json';
 const IMAGE_BASE_URL = 'https://github.com/Meta-Mobile-Developer-PC/Working-With-Data-API/blob/main/images';
 const screenWidth = Dimensions.get("window").width;
 
-const Home = ({ navigation }) => {
+const Home = () => {
     const [loading, setLoading] = useState(false);
     const [menuData, setMenuData] = useState([]);
+    const [activeCategories, setActiveCategories] = useState([]);
+    const categories = ["Starters", "Mains", "Desserts", "Drinks"];
+    const [searchText, setSearchText] = useState("");
 
     useEffect(() => {
-        clearMenuTable()
-
         // Ensure the database table is created
         createMenuTable();
 
@@ -33,7 +40,7 @@ const Home = ({ navigation }) => {
 
                     const menuWithImages = json.menu.map((item) => ({
                         ...item,
-                        image: `${IMAGE_BASE_URL}/${item.image}?raw=true`, // Add full image URL
+                        image: `${IMAGE_BASE_URL}/${item.image}?raw=true`,
                     }));
 
                     // Save fetched data to the local database
@@ -50,6 +57,21 @@ const Home = ({ navigation }) => {
             }
         });
     }, []);
+
+    const debouncedSearch = debounce((text) => {
+        setSearchText(text); // Update `searchText` state with debounce
+    }, 500);
+
+    const handleSearchChange = (text) => {
+        debouncedSearch(text); // Debounce updates to `searchText`
+    };
+
+    useEffect(() => {
+        // Trigger filtering logic when either `searchText` or `activeCategories` changes
+        filterMenuByNameAndCategories(searchText, activeCategories, (filteredData) => {
+            setMenuData(filteredData); // Update filtered menu items in state
+        });
+    }, [searchText, activeCategories]);
 
     if (loading) {
         return <Text>Loading...</Text>;
@@ -72,10 +94,38 @@ const Home = ({ navigation }) => {
     );
 
     return (
-        <HomePageView>
+        <HomePageView searchText={searchText} handleSearchChange={handleSearchChange}>
             {/* Content */}
             <>
-                <Text style={styles.headerText}>ORDER FOR DELIVERY</Text>
+                {/* Header Text */}
+                <Text style={styles.headerText}>ORDER FOR DELIVERY!</Text>
+
+                {/* Categories Selector */}
+                <View style={styles.categoryRow}>
+                    {categories.map((category) => (
+                        <Pressable
+                            key={category}
+                            onPress={() =>
+                                setActiveCategories((prevCategories) =>
+                                    prevCategories.includes(category)
+                                        ? prevCategories.filter((cat) => cat !== category)
+                                        : [...prevCategories, category]
+                                )
+                            }
+                            style={{
+                                backgroundColor: activeCategories.includes(category) ? "#4CAF50" : "#CCD2D8",
+                                paddingVertical: 5,
+                                paddingHorizontal: 8,
+                                borderRadius: 5,
+                                marginHorizontal: 5,
+                            }}
+                        >
+                            <Text style={styles.categoryButtonText}>{category}</Text>
+                        </Pressable>
+                    ))}
+                </View>
+
+                {/* Filtered Menu List */}
                 <FlatList
                     data={menuData}
                     keyExtractor={(item, index) => index.toString()}
@@ -96,8 +146,9 @@ const styles = StyleSheet.create({
     },
     headerText: {
         fontSize: 18,
-        color: '#4D5B6C',
-        marginBottom: 10,
+        color: 'black',
+        fontWeight: 'bold',
+        marginTop: 10,
     },
     button: {
         alignSelf: 'flex-end',
@@ -147,4 +198,13 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#333',
     },
+    categoryRow: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        marginVertical: 10
+    },
+    categoryButtonText: {
+        color: "black",
+        fontSize: 16
+    }
 });

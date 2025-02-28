@@ -8,8 +8,9 @@ import {
 } from 'react-native';
 import HeroPageView from "../components/HeroPageView";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { navigate } from '../utilities/navigationRef';
 
-export default function Onboarding({ navigation, setOnboardingCompleted }) {
+export default function Onboarding({ setOnboardingStatus }) {
     const [name, onChangeName] = useState('');
     const [email, onChangeEmail] = useState('');
     const [disabled, setDisabled] = useState(true);
@@ -22,7 +23,7 @@ export default function Onboarding({ navigation, setOnboardingCompleted }) {
         }
         else {
             completeOnboarding().then(() => {
-                navigation.navigate('Profile');
+                navigate('Profile');
             }).catch(error => {
                 Alert.alert("Error saving onboarding status in AsyncStorage:");
             })
@@ -40,7 +41,7 @@ export default function Onboarding({ navigation, setOnboardingCompleted }) {
             await AsyncStorage.setItem("onboardingCompleted", "true");
             await AsyncStorage.setItem("userName", name.trim());
             await AsyncStorage.setItem("userEmail", email.trim());
-            setOnboardingCompleted(true);
+            setOnboardingStatus(true);
         } catch (error) {
             console.error("Error saving onboarding data in AsyncStorage:", error);
         }

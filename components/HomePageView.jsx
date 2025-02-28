@@ -1,16 +1,16 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import Header from './Header';
 import Footer from './Footer';
-import Hero from './Hero';
+import HeaderWithProfile from "./HeaderWithProfile";
+import HeroWithSearch from "./HeroWithSearch";
 
-export default function HomePageView({ children }) {
+export default function HomePageView({ children, searchText, handleSearchChange }) {
     const [contentChildren, footerChildren] = React.Children.toArray(children);
 
     return (
         <View style={styles.container}>
-            <Header />
-            <Hero />
+            <HeaderWithProfile />
+            <HeroWithSearch searchText={searchText} handleSearchChange={handleSearchChange}/>
 
             {/* Content Style Applied Here */}
             {contentChildren && (
@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     content: {
-        flex: .85,
+        flex: .75,
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 15,

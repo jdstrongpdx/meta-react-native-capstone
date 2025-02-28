@@ -2,7 +2,6 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import Header from './Header';
 import Footer from './Footer';
-import Hero from './Hero';
 
 export default function ProfilePageView({ children }) {
     const [contentChildren, footerChildren] = React.Children.toArray(children);
@@ -29,7 +28,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     content: {
-        flex: 0.8,
+        flex: 0.9,
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 15,
