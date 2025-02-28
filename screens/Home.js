@@ -4,9 +4,9 @@ import HomePageView from "../components/HomePageView";
 import {
     createMenuTable,
     getMenuItems,
-    insertMenuItems
+    insertMenuItems,
+    filterMenuByNameAndCategories
 } from "../utilities/database";
-import { filterMenuByNameAndCategories } from "../utilities/database";
 import debounce from "lodash.debounce";
 
 const API_URL = 'https://raw.githubusercontent.com/Meta-Mobile-Developer-PC/Working-With-Data-API/main/capstone.json';

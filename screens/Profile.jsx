@@ -12,8 +12,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import ProfilePageView from "../components/ProfilePageView";
 import * as ImagePicker from 'expo-image-picker';
 import {navigate} from "../utilities/navigationRef";
+import {useOnboarding} from "../contexts/OnboardingContext";
 
-export default function Profile({ setOnboardingStatus }) {
+export default function Profile() {
     const [name, onChangeName] = useState('');
     const [email, onChangeEmail] = useState('');
     const [phoneNumber, onChangePhoneNumber] = useState('');
@@ -21,6 +22,7 @@ export default function Profile({ setOnboardingStatus }) {
     const [newsletter, setNewsletter] = useState(false);
     const [disabled, setDisabled] = useState(false);
     const [image, setImage] = useState(null);
+    const { logout } = useOnboarding();
 
     // Load data from AsyncStorage on component mount
     useEffect(() => {
@@ -115,14 +117,16 @@ export default function Profile({ setOnboardingStatus }) {
             } else {
                 await AsyncStorage.removeItem("userAvatar");
             }
+            Alert.alert("Profile updated successfully!");
+            setDisabled(false);
         } catch (error) {
             console.error("Error saving profile data in AsyncStorage:", error);
         }
     };
 
     const handleLogout = async () => {
-        setOnboardingStatus(false);
         await AsyncStorage.clear();
+        await logout();
         navigate('Onboarding');
     };
 

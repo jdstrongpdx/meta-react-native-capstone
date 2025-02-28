@@ -5,7 +5,7 @@ import { navigate } from '../utilities/navigationRef';
 
 const Header = () => {
     const [avatar, setAvatar] = useState(null);
-    const [initials, setInitials] = useState(""); // State to store initials
+    const [initials, setInitials] = useState("");
 
     const loadAvatar = async () => {
         const savedImage = await AsyncStorage.getItem("userAvatar");
@@ -22,7 +22,6 @@ const Header = () => {
 
     const goToProfile = () => {
         navigate("Profile");
-
     };
 
     useEffect(() => {

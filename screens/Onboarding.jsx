@@ -9,24 +9,30 @@ import {
 import HeroPageView from "../components/HeroPageView";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { navigate } from '../utilities/navigationRef';
+import {useOnboarding} from "../contexts/OnboardingContext";
 
-export default function Onboarding({ setOnboardingStatus }) {
+export default function Onboarding() {
     const [name, onChangeName] = useState('');
     const [email, onChangeEmail] = useState('');
     const [disabled, setDisabled] = useState(true);
+    const { onboard } = useOnboarding();
 
-    const handlePress = () => {
+    const handlePress = async () => {
         setDisabled(true);
         if (!validateEmail(email) || name.trim().length === 0) {
             Alert.alert('Please enter a valid name and email address');
             setDisabled(false);
+            return
         }
-        else {
-            completeOnboarding().then(() => {
-                navigate('Profile');
-            }).catch(error => {
-                Alert.alert("Error saving onboarding status in AsyncStorage:");
-            })
+
+        try {
+            await AsyncStorage.setItem("userName", name.trim());
+            await AsyncStorage.setItem("userEmail", email.trim());
+            await onboard();
+            navigate('Profile');
+        } catch (error) {
+            console.error("Error saving onboarding data in AsyncStorage:", error);
+            setDisabled(false);
         }
     };
 
@@ -34,17 +40,6 @@ export default function Onboarding({ setOnboardingStatus }) {
         return email.match(
             /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
         );
-    };
-
-    const completeOnboarding = async () => {
-        try {
-            await AsyncStorage.setItem("onboardingCompleted", "true");
-            await AsyncStorage.setItem("userName", name.trim());
-            await AsyncStorage.setItem("userEmail", email.trim());
-            setOnboardingStatus(true);
-        } catch (error) {
-            console.error("Error saving onboarding data in AsyncStorage:", error);
-        }
     };
 
     const handleEmailChange = (value) => {
