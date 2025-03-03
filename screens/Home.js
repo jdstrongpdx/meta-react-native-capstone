@@ -29,12 +29,10 @@ const Home = () => {
             if (storedMenu.length > 0) {
                 // If items exist in the database, use them
                 setMenuData(storedMenu);
-                console.log("Loading menu items from the database.")
                 setLoading(false);
             } else {
                 // If no data exists, fetch from the remote API
                 try {
-                    console.log("Loading menu items from the the internet.")
                     const response = await fetch(API_URL);
                     const json = await response.json();
 
